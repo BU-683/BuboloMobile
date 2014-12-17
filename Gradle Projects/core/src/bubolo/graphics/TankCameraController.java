@@ -1,6 +1,8 @@
 package bubolo.graphics;
 
+import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
+import com.badlogic.gdx.graphics.OrthographicCamera;
 
 import bubolo.world.World;
 import bubolo.world.entity.concrete.Tank;
@@ -14,7 +16,7 @@ import static com.google.common.base.Preconditions.*;
 class TankCameraController implements CameraController
 {
 	private Tank tank;
-	private Camera camera;
+	private OrthographicCamera camera;
 
 	/**
 	 * Constructs a TankCameraController. Package-private because TankCameraControllers are internal
@@ -30,7 +32,7 @@ class TankCameraController implements CameraController
 	@Override
 	public void setCamera(Camera camera)
 	{
-		this.camera = checkNotNull(camera);
+		this.camera = (OrthographicCamera) checkNotNull(camera);
 	}
 
 	@Override
@@ -52,23 +54,26 @@ class TankCameraController implements CameraController
 
 		// The libgdx camera's position is from the bottom left corner:
 		// https://github.com/libgdx/libgdx/wiki/Orthographic-camera
-		camera.position.set(Math.round(tankX), Math.round(tankY), 0.f);
+		camera.position.set(Math.round(tankX), Math.round(tankY), 0.001f);
 		camera.update();
 	}
 
 	private static float calculateCameraX(Camera camera, Tank tank, World world)
 	{
+		//float screenWidth = Gdx.graphics.getWidth()/2;
+		float screenWidth = camera.viewportWidth;
+		
 		float tankX = tank.getX();
-
-		float cameraX = tankX - camera.viewportWidth / 2.f;
+		
+		float cameraX = tankX - screenWidth / 2.f;
 		if (cameraX < 0)
 		{
 			cameraX = 0;
 		}
-		else if (cameraX > world.getMapWidth() - camera.viewportWidth)
+		else if (cameraX > world.getMapWidth() - screenWidth)
 		{
 			// Ensure that screen doesn't go negative if the world is smaller than the camera.
-			float newCameraX = world.getMapWidth() - camera.viewportWidth;
+			float newCameraX = world.getMapWidth() - screenWidth;
 			cameraX = (newCameraX >= 0) ? newCameraX : 0;
 		}
 
@@ -77,17 +82,19 @@ class TankCameraController implements CameraController
 
 	private static float calculateCameraY(Camera camera, Tank tank, World world)
 	{
+		//float screenHeight = Gdx.graphics.getHeight()/2;
+		float screenHeight = camera.viewportHeight;
 		float tankY = tank.getY();
 
-		float cameraY = tankY - camera.viewportHeight / 2.f;
+		float cameraY = tankY - screenHeight / 2.f;
 		if (cameraY < 0)
 		{
 			cameraY = 0;
 		}
-		else if (cameraY > world.getMapHeight() - camera.viewportHeight)
+		else if (cameraY > world.getMapHeight() - screenHeight)
 		{
 			// Ensure that screen doesn't go negative if the world is smaller than the camera.
-			float newCameraY = world.getMapHeight() - camera.viewportHeight;
+			float newCameraY = world.getMapHeight() - screenHeight;
 			cameraY = (newCameraY >= 0) ? newCameraY : 0;
 		}
 

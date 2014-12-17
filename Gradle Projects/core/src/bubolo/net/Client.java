@@ -15,6 +15,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.badlogic.gdx.Gdx;
+
 import bubolo.net.command.ClientConnected;
 
 /**
@@ -38,6 +40,8 @@ class Client implements NetworkSubsystem, Runnable
 	private String playerName;
 
 	private ObjectOutputStream serverStream;
+	
+	private InetAddress serverIpAddress;
 
 	/**
 	 * Constructs a Client object.
@@ -64,23 +68,10 @@ class Client implements NetworkSubsystem, Runnable
 	 */
 	void connect(InetAddress serverIpAddress, String clientName) throws NetworkException
 	{
-		try
-		{
-			playerName = clientName;
-			
-			server = new Socket(serverIpAddress, NetworkInformation.GAME_PORT);
-			server.setTcpNoDelay(true);
+		playerName = clientName;
+		this.serverIpAddress = serverIpAddress;
 
-			serverStream = new ObjectOutputStream(server.getOutputStream());
-			send(new ClientConnected(playerName));
-
-			// Start the network reader thread.
-			new Thread(this).start();
-		}
-		catch (IOException e)
-		{
-			throw new NetworkException(e);
-		}
+		new Thread(this).start();
 	}
 
 	@Override
@@ -98,6 +89,16 @@ class Client implements NetworkSubsystem, Runnable
 	@Override
 	public void run()
 	{
+		try {
+			server = new Socket(serverIpAddress, NetworkInformation.GAME_PORT);
+			server.setTcpNoDelay(true);
+			serverStream = new ObjectOutputStream(server.getOutputStream());
+		} catch (IOException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		
+		send(new ClientConnected(playerName));
 		if (server == null)
 		{
 			throw new IllegalStateException(

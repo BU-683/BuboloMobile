@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.badlogic.gdx.Gdx;
+
 import bubolo.world.entity.Entity;
 import bubolo.world.entity.concrete.Base;
 import bubolo.world.entity.concrete.Crater;
@@ -88,6 +90,7 @@ public class Sprites
 
 		Sprite sprite = spriteFactories.get(entity.getClass()).create(entity);
 		sprites.add(sprite);
+		
 		return sprite;
 	}
 	

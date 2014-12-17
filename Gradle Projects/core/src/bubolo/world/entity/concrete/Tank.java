@@ -52,7 +52,7 @@ public class Tank extends Actor implements Damageable
 	private float speed = 0.f;
 
 	// The rate of acceleration, in pixels per tick.
-	private static final float accelerationRate = 0.01f;
+	private static final float accelerationRate = 1.0f;
 
 	// The rate of deceleration, in pixels per tick.
 	private static final float decelerationRate = 0.03f;

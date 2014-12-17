@@ -1,8 +1,7 @@
 package bubolo.graphics;
 
 import java.io.File;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -10,10 +9,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.json.simple.parser.ParseException;
+
 import bubolo.ui.Screen;
 import bubolo.world.World;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.assets.AssetManager;
 import com.badlogic.gdx.files.FileHandle;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.GL20;
@@ -21,6 +23,9 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.Array;
+import com.badlogic.gdx.utils.viewport.ScreenViewport;
+import com.badlogic.gdx.utils.viewport.Viewport;
 
 /**
  * The top-level class for the Graphics system.
@@ -32,7 +37,7 @@ public class Graphics
 	/**
 	 * File path where textures are stored.
 	 */
-	public static final String TEXTURE_PATH = "/New Folder/core/res/textures/";
+	public static final String TEXTURE_PATH = "textures/";
 
 	/**
 	 * The target number of draw ticks per second.
@@ -49,8 +54,9 @@ public class Graphics
 	private static Map<String, Texture> textures = new HashMap<String, Texture>();
 
 	private SpriteBatch batch;
-	private Camera camera;
-
+	private OrthographicCamera camera;
+	private ScreenViewport viewPort;
+	
 	private Sprites spriteSystem;
 
 	// The list of camera controllers.
@@ -65,6 +71,12 @@ public class Graphics
 	private List<Sprite> spritesInView = new ArrayList<Sprite>();
 
 	private List<Sprite> background;
+	
+	private AssetManager assetManager;
+	
+	private int windowWidth;
+	
+	private int windowHeight;
 
 	/**
 	 * Gets a reference to the Graphics system. The Graphics system must be explicitly constructed
@@ -88,26 +100,6 @@ public class Graphics
 	}
 
 	/**
-	 * Returns a texture from a path. Ensures that the same texture isn't stored multiple times.
-	 * Will load the file if it has not yet been loaded.
-	 * 
-	 * @param path
-	 *            the path to the texture file.
-	 * @return the requested texture.
-	 */
-	static Texture getTexture(String path)
-	{
-		Texture texture = textures.get(path);
-		if (texture == null)
-		{
-			texture = new Texture(new FileHandle(new File(path)));
-			textures.put(path, texture);
-		}
-
-		return texture;
-	}
-
-	/**
 	 * Destroys all textures, and destroys the Graphics instance.
 	 */
 	public static void dispose()
@@ -118,49 +110,37 @@ public class Graphics
 		}
 		instance = null;
 	}
-	
+
 	/**
-	 * Creates the graphics system. with pre loaded textures.  
-	 * this allows the texture file reading to be abstracted 
-	 * from the graphics system
+	 * Creates the graphics system. With pre loaded 
+	 * textures to abstract file access away from the graphics system
 	 * 
 	 * @param windowWidth
 	 *            the width of the window, in pixels.
 	 * @param windowHeight
 	 *            the height of the window, in pixels.
-	 * @param textures 
-	 * 			  the list of of textures that has been loaded
-	 */
-	public Graphics(int windowWidth, int windowHeight, Map<String, Texture> textures)
-	{
-		camera = new OrthographicCamera(windowWidth, windowHeight);
-		batch = new SpriteBatch();
-		spriteSystem = Sprites.getInstance();
-
-		this.textures = textures;
-
-		synchronized (Graphics.class)
-		{
-			Graphics.instance = this;
-			spriteComparator = new SpriteComparator();
-		}
-	}
-	/**
-	 * Creates the graphics system.
-	 * 
-	 * @param windowWidth
-	 *            the width of the window, in pixels.
-	 * @param windowHeight
-	 *            the height of the window, in pixels.
+	 * @param texturesIn 
+	 *  		  the textures that were already loaded
 	 */
 	public Graphics(int windowWidth, int windowHeight)
 	{
-		camera = new OrthographicCamera(windowWidth, windowHeight);
+		this.windowWidth = Gdx.graphics.getWidth();
+		this.windowHeight = Gdx.graphics.getHeight();
+		
+		camera = new OrthographicCamera(this.windowWidth, this.windowHeight);
+
+		//camera.translate(0, 0, 200);
+		//camera = new OrthographicCamera(480	, 320);
+		//camera.viewportHeight = this.windowHeight;
+		//camera.viewportWidth = this.windowWidth;
+		
+		
 		batch = new SpriteBatch();
 		spriteSystem = Sprites.getInstance();
 
-		loadAllTextures();
-
+		this.assetManager = new AssetManager();
+		this.loadAllTextures();
+ 
 		synchronized (Graphics.class)
 		{
 			Graphics.instance = this;
@@ -220,7 +200,7 @@ public class Graphics
 		Collections.sort(spritesInView, spriteComparator);
 
 		// Draw the background layer.
-		drawBackground(world);
+		//drawBackground(world);
 
 		// Render sprites by layer.
 		drawEntities(spritesInView, DrawLayer.FIRST);
@@ -232,7 +212,10 @@ public class Graphics
 		// Render the user interface.
 		if (ui != null)
 		{
-			ui.act(Gdx.graphics.getDeltaTime());
+			//ui.act(Gdx.graphics.getDeltaTime());
+			//ui.setViewport(viewPort);
+			ui.getViewport().update(windowWidth, windowHeight);
+			//ui.getViewport().setCamera(camera);
 			ui.draw();
 		}
 
@@ -358,25 +341,6 @@ public class Graphics
 	}
 
 	/**
-	 * Loads all textures. This isn't strictly necessary, but we encountered slight hiccups when a
-	 * sprite type was loaded for the first time. This was most noticeable when the first bullet is
-	 * fired. Note that only pngs are currently loaded (if all files were loaded, file system
-	 * artificacts could be picked up, like the Windows thumbs.db file).
-	 */
-	private static void loadAllTextures()
-	{
-
-		File textureDirectory = new File(TEXTURE_PATH);
-		for (File file : textureDirectory.listFiles())
-		{
-			if (file.getName().endsWith("png"))
-			{
-				getTexture(TEXTURE_PATH + file.getName());
-			}
-		}
-	}
-
-	/**
 	 * Comparator that is used when sorting sprites.
 	 * 
 	 * @author BU CS673 - Clone Productions
@@ -389,4 +353,33 @@ public class Graphics
 			return (o1.getClass().getName().compareTo(o2.getClass().getName()));
 		}
 	}
+    private void loadAllTextures()
+	{
+        //Array<Texture> textureList = new Array<Texture>();
+    	//assetManager.getAll(Texture.class,textureList);
+        //assetManager.lo
+    	Array<String> files = new Array<String>();
+    	files.add("textures/grass.png");
+    	files.add("textures/tank.png");
+    	files.add("textures/water.png");
+    	files.add("textures/wall.png");
+    	files.add("textures/road.png");
+    	
+    	for(String file:files)
+    	{
+    		getTexture(file);
+    	}
+    	
+	}
+    
+    static Texture getTexture(String path)
+    {
+    	Texture texture = textures.get(path);
+    	if (texture == null)
+    	{
+    		texture = new Texture(Gdx.files.internal(path));
+    		textures.put(path, texture);
+    	}
+    	return texture;
+    }
 }

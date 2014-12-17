@@ -10,6 +10,9 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.assets.AssetManager;
+
 import bubolo.world.GameWorld;
 import bubolo.world.Tile;
 import bubolo.world.World;
@@ -54,20 +57,8 @@ public class Parser
 
 		return currentParser;
 	}
-
-	/**
-	 * Define a Path to a valid map to parse and receive a World based on the given map.
-	 * 
-	 * @param mapPath
-	 *            the Path of a map to be parsed into a world
-	 * @return a World representation of the map file that was parsed
-	 * @throws ParseException
-	 *             for invalid JSON files
-	 * @throws IOException when 
-	 * @throws org.json.simple.parser.ParseException 
-	 */
-	public World parseMap(Path mapPath) throws IOException, ParseException
-	{
+    public World androidParseMap()throws IOException, ParseException
+    {
 		int mapHeight = 0;
 		int mapWidth = 0;
 		Object obj = null;
@@ -77,8 +68,8 @@ public class Parser
 		World world = null;
 
 		Charset charset = Charset.forName("US-ASCII");
-
-		try (BufferedReader reader = Files.newBufferedReader(mapPath, charset);)
+		
+		try (BufferedReader reader = Gdx.files.internal("maps/Everard Island.json").reader(1))
 		{
 			JSONParser parser = new JSONParser();
 			obj = parser.parse(reader);
@@ -97,18 +88,18 @@ public class Parser
 			String dataString = null;
 			world = new GameWorld(Coordinates.TILE_TO_WORLD_SCALE * mapWidth,
 					Coordinates.TILE_TO_WORLD_SCALE * mapHeight);
-
 			for (int i = 0; i < mapHeight; i++)
 			{
 				for (int j = 0; j < mapWidth; j++)
 				{
 					dataString = tileData.get(i * mapWidth + j).toString();
 					int tileYIndex = mapHeight - i - 1;
+				
 					mapTiles[j][tileYIndex] = new Tile(j, tileYIndex, (Terrain)world.addEntity(
 							layerOneSwitch(dataString)).setRotation((float)Math.PI / 2));
 				}
 			}
-
+			
 			if (layerArray.size() > 1)
 			{
 				layerObject = (JSONObject)layerArray.get(1);
@@ -166,7 +157,7 @@ public class Parser
 
 
 		return world;
-	}
+    }
 
 	/**
 	 * The following switches are used to more clearly show the logic for deciding what object the

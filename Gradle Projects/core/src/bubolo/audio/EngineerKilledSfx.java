@@ -21,7 +21,7 @@ public class EngineerKilledSfx extends SoundEffect
 	{
 		try
 		{
-			FileHandle soundFile = new FileHandle(new File(Audio.SFX_PATH + "engineer_killed.ogg"));
+			FileHandle soundFile = Gdx.files.internal("sfx/engineer_killed.ogg");
 			Sound sound = Gdx.audio.newSound(soundFile);
 			setSound(sound);
 		}

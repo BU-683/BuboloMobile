@@ -21,7 +21,7 @@ public class WallBuiltSfx extends SoundEffect
 	{
 		try
 		{
-			FileHandle soundFile = new FileHandle(new File(Audio.SFX_PATH + "wall_built.ogg"));
+			FileHandle soundFile = Gdx.files.internal("sfx/wall_built.ogg");
 			Sound sound = Gdx.audio.newSound(soundFile);
 			setSound(sound);
 		}

@@ -21,7 +21,7 @@ public class TankExplosionSfx extends SoundEffect
 	{
 		try
 		{
-			FileHandle soundFile = new FileHandle(new File(Audio.SFX_PATH + "tank_explosion.wav"));
+			FileHandle soundFile = Gdx.files.internal("sfx/tank_explosion.wav");
 			Sound sound = Gdx.audio.newSound(soundFile);
 			setSound(sound);
 		}

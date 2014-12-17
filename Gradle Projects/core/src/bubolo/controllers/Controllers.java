@@ -6,6 +6,7 @@ import java.util.Map;
 import bubolo.controllers.ai.AIBaseController;
 import bubolo.controllers.ai.AIMineController;
 import bubolo.controllers.ai.AIPillboxController;
+import bubolo.controllers.input.AndroidTankController;
 import bubolo.controllers.input.KeyboardTankController;
 import bubolo.util.Nullable;
 import bubolo.world.entity.Entity;
@@ -88,7 +89,8 @@ public class Controllers
 			@Override
 			public void create(Entity entity)
 			{
-				entity.addController(new KeyboardTankController((Tank)entity));
+				//entity.addController(new KeyboardTankController((Tank)entity));
+				entity.addController(new AndroidTankController((Tank)entity));
 			}
 		});
 

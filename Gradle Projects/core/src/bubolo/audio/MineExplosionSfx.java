@@ -21,7 +21,7 @@ public class MineExplosionSfx extends SoundEffect
 	{
 		try
 		{
-			FileHandle soundFile = new FileHandle(new File(Audio.SFX_PATH + "mine_explosion.wav"));
+			FileHandle soundFile = Gdx.files.internal("sfx/mine_explosion.wav");
 			Sound sound = Gdx.audio.newSound(soundFile);
 			setSound(sound);
 		}
